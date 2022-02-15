@@ -10,6 +10,8 @@ int main() {
     while (scanf("%d %d %d", &graph_table[i].v1, &graph_table[i].v2, &graph_table[i].w) == 3)
         ++i;
 
+    test_input(graph_table, n, i);
+
     qsort(graph_table, i, sizeof(struct edge), compare);
 
     printf ("%d\n", kruskal(graph_table, n, i));

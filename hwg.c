@@ -109,3 +109,39 @@ static int paint_top (struct edge *graph_table, const int n, const int current, 
 int compare (const void *x1, const void *x2) {
     return ((*(struct edge *)x1).w - (*(struct edge *)x2).w);
 }
+
+void test_input (struct edge *graph_table, const int n, const int lines) {
+    int n_tops = 0, flag1 = 0, flag2 = 0;
+    int *tops = (int *) calloc(2 * lines, sizeof(int));
+
+    for (int i = 0; i < lines; ++i) {
+        for (int j = 0; j < n_tops; ++j) {
+            if (graph_table[i].v1 == tops[j]) {
+                flag1 = 1;
+            }
+            if (graph_table[i].v2 == tops[j]) {
+                flag2 = 1;
+            }
+        }
+        if (flag1 == 0) {
+            tops[n_tops] = graph_table[i].v1;
+            ++n_tops;
+        }
+        if (flag2 == 0) {
+            tops[n_tops] = graph_table[i].v2;
+            ++n_tops;
+        }
+
+        flag1 = 0;
+        flag2 = 0;
+    }
+
+    free(tops);
+
+    if (n_tops > n) {
+        printf("Error input: The number of entered vertices is greater %d\n", n);
+        free(graph_table);
+        _Exit(1);
+    }
+
+}
