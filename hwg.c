@@ -21,7 +21,7 @@
 минимального веса.
 --------------------------------------------------------------------------*/
 
-static int paint_top (struct edge *graph_table, const int n, const int current, int* peaks, const int lines, const int top, int *flag);
+static int paint_top (struct edge *graph_table, const int current, int* peaks, const int lines, const int top, int *flag);
 
 int kruskal (struct edge *graph_table, const int n, const int lines) {
     int i = 0, n_edge_res = 0, min = 0, res = 0;
@@ -68,7 +68,7 @@ int loop_graph (struct edge *graph_table, const int n, const int lines) {
     int *peaks = (int *) calloc(n, sizeof(int));
 
     peaks[graph_table[0].v1] = -1;
-    res = paint(graph_table, n, -1, graph_table[0].v1, peaks, lines);
+    res = paint(graph_table, -1, graph_table[0].v1, peaks, lines);
 
     free(peaks);
 
@@ -76,27 +76,27 @@ int loop_graph (struct edge *graph_table, const int n, const int lines) {
 
 }
 
-int paint (struct edge *graph_table, const int n, const int parent, const int current, int* peaks, const int lines) {
+int paint (struct edge *graph_table, const int parent, const int current, int* peaks, const int lines) {
     int flag = 0;
 
     for (int i = 0; i < lines; ++i) {
         if (graph_table[i].v1 == current && graph_table[i].v2 != parent) {
-            if (paint_top (graph_table, n, current, peaks, lines, graph_table[i].v2, &flag))
+            if (paint_top (graph_table, current, peaks, lines, graph_table[i].v2, &flag))
                 return 1;
         }
         if (graph_table[i].v2 == current && graph_table[i].v1 != parent) {
-            if (paint_top (graph_table, n, current, peaks, lines, graph_table[i].v1, &flag))
+            if (paint_top (graph_table, current, peaks, lines, graph_table[i].v1, &flag))
                 return 1;
         }
     }
     return flag;
 }
 
-static int paint_top (struct edge *graph_table, const int n, const int current, int* peaks, const int lines, const int top, int *flag) {
+static int paint_top (struct edge *graph_table, const int current, int* peaks, const int lines, const int top, int *flag) {
 
     if (peaks[top] != -1) {
         peaks[top] = -1;
-        if (paint(graph_table, n, current, top, peaks, lines) == 1) {
+        if (paint(graph_table, current, top, peaks, lines) == 1) {
             *flag = 1;
         }
         return 0;
@@ -112,15 +112,34 @@ int compare (const void *x1, const void *x2) {
 
 void test_input (struct edge *graph_table, const int n, const int lines) {
     int n_tops = 0, flag1 = 0, flag2 = 0;
-    int *tops = (int *) calloc(2 * lines, sizeof(int));
+    int *tops, *peaks;
+
+    peaks = (int *) calloc(n, sizeof(int));
+    tops = (int *) calloc(2 * lines, sizeof(int));
 
     for (int i = 0; i < lines; ++i) {
+
+        if (graph_table[i].w < 0) {
+            printf("Error input: You entered a negative weight\n");
+            free(tops);
+            free(peaks);
+            free(graph_table);
+            abort();
+        }
+
         for (int j = 0; j < n_tops; ++j) {
             if (graph_table[i].v1 == tops[j]) {
                 flag1 = 1;
             }
             if (graph_table[i].v2 == tops[j]) {
                 flag2 = 1;
+            }
+            if (graph_table[i].v1 == graph_table[i].v2) {
+                printf("Error input: You entered an edge between the same vertex\n");
+                free(tops);
+                free(peaks);
+                free(graph_table);
+                abort();
             }
         }
         if (flag1 == 0) {
@@ -140,8 +159,59 @@ void test_input (struct edge *graph_table, const int n, const int lines) {
 
     if (n_tops > n) {
         printf("Error input: The number of entered vertices is greater %d\n", n);
+        free(peaks);
         free(graph_table);
-        _Exit(1);
+        abort();
     }
 
+    connected_grapht(graph_table, -1, graph_table[0].v1, peaks, lines);
+
+    for (int i = 0; i < n; ++i) {
+        if (peaks[i] != -1) {
+            printf("Error input: You entered an unrelated graph\n");
+            free(peaks);
+            free(graph_table);
+            abort();
+        }
+    }
+
+}
+
+void connected_grapht (struct edge *graph_table, const int parent, const int current, int* peaks, const int lines) {
+
+    for (int i = 0; i < lines; ++i) {
+        if (graph_table[i].v1 == current && graph_table[i].v2 != parent) {
+            if (peaks[graph_table[i].v2] != -1) {
+                peaks[graph_table[i].v2] = -1;
+                connected_grapht(graph_table, current, graph_table[i].v2, peaks, lines);
+            }
+        }
+        if (graph_table[i].v2 == current && graph_table[i].v1 != parent) {
+            if (peaks[graph_table[i].v1] != -1) {
+                peaks[graph_table[i].v1] = -1;
+                connected_grapht(graph_table, current, graph_table[i].v1, peaks, lines);
+            }
+        }
+    }
+}
+
+void input (int *n, struct edge **graph_table, int *lines) {
+    int res_scan = 0;
+
+    res_scan = scanf("%d", n);
+    if (res_scan != 1) {
+        printf("Error input: You did not enter the number of vertices\n");
+        abort();
+    }
+
+    *graph_table = (struct edge *) calloc((*n) * (*n), sizeof(struct edge));
+
+    while (scanf("%d %d %d", &(*graph_table)[(*lines)].v1, &(*graph_table)[(*lines)].v2, &(*graph_table)[(*lines)].w) == 3) {
+        ++(*lines);
+    }
+
+    if ((*lines) == 0) {
+        printf("Error input: You didn't enter edges\n");
+        abort();
+    }
 }
